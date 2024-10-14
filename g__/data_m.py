@@ -10,7 +10,7 @@ def g_rsi(data, period=14):
         (delta.where(delta > 0, 0))
             .rolling(window=period)
             .mean()
-        / 
+        /
         (-delta.where(delta < 0, 0))
             .rolling(window=period)
             .mean()
@@ -19,8 +19,8 @@ def g_rsi(data, period=14):
 
 def g_adx(data, period=14):
     atr = pd.DataFrame({
-        'tr1': data["high"] - data["low"], 
-        'tr2': np.abs(data["high"] - data["close"].shift()), 
+        'tr1': data["high"] - data["low"],
+        'tr2': np.abs(data["high"] - data["close"].shift()),
         'tr3': np.abs(data["low"] - data["close"].shift())
     })\
         .max(axis=1)\
@@ -51,7 +51,7 @@ def g_cci(data, period=20):
 def g_williams_r(data, period=14):
     highest_high = data["high"].rolling(window=period).max()
     return -100 * (highest_high - data["close"]) / (
-        highest_high - 
+        highest_high -
         data["low"]
             .rolling(window=period)
             .min()
@@ -61,7 +61,7 @@ def g_tsi(data, period=14,):
     return data["close"]\
         .rolling(window=period)\
         .corr(pd.Series(np.arange(len(data["close"]))))\
-    
+
 def g_lorentzian_distances(feature_arrs, bars_back=500,):
     return np.sum([
         feature_arr\
@@ -71,14 +71,14 @@ def g_lorentzian_distances(feature_arrs, bars_back=500,):
     ], axis=0)
 
 def g_indicators_data(
-    data, 
+    data,
     in_need_l1={
-        "RSI": dict(period=14,), 
-        "ADX": dict(period=14,), 
-        "CCI": dict(period=21,), 
-        "WT": dict(period=14,), 
+        "RSI": dict(period=14,),
+        "ADX": dict(period=14,),
+        "CCI": dict(period=21,),
+        "WT": dict(period=14,),
         "TSI": dict(period=14,),
-    }, 
+    },
     in_need_l2={"LD": dict(bars_back=500,)}
 ):
     choise_l1 = {
@@ -102,28 +102,28 @@ def g_indicators_data(
     })
 
 def g_y_train(
-    data, 
-    feauture_main={"name": "RSI", "sell": 70, "buy": 30}, 
+    data,
+    feauture_main={"name": "RSI", "sell": 70, "buy": 30},
     features_add={}
 ):
     feauture_main["name"] = "INDCS/ " + feauture_main["name"]
-    for i in range(len(features_add)):
-        key_ = list(features_add.keys())[i]
+    for key_, item_ in list(features_add.items()):
         features_add["INDCS/ " + key_] = features_add.pop(key_)
     main_sell = data[feauture_main["name"]] > feauture_main["sell"]
     main_buy =  data[feauture_main["name"]] < feauture_main["buy"]
-    
+    print(list(features_add.keys()))
+
     if features_add:
         invert_func = lambda v, bool_: np.invert(v) if bool_ else v
-        # fill_func = 
+        # fill_func =
         main_sell, main_buy = [
-            np.logical_and(side, np.all(cond, axis=0)) 
+            np.logical_and(side, np.all(cond, axis=0))
             for side, cond in zip(
-                (main_sell, main_buy), 
+                (main_sell, main_buy),
                 zip(*[[*cond] for cond in [
                     invert_func((
-                        (data[feature] > thresholds[0]), 
-                        ((data[feature] < thresholds[1]) if thresholds[1] != None else (data[feature] > thresholds[0])) 
+                        (data[feature] > thresholds[0]),
+                        ((data[feature] < thresholds[1]) if thresholds[1] != None else (data[feature] > thresholds[0]))
                     ), thresholds[2])
                     for feature, thresholds in features_add.items()
                 ]])
@@ -132,9 +132,9 @@ def g_y_train(
     return pd.Series(np.where(main_sell, -1, np.where(main_buy, 1, 0)))
 
 def g_knn_predict(
-    x_train, 
-    x_test, 
-    y_train, 
+    x_train,
+    x_test,
+    y_train,
     n_neighbors=3
 ):
     knn = KNeighborsClassifier(n_neighbors=n_neighbors)
