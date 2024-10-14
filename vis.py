@@ -13,10 +13,10 @@ def g_visualize(
     for el in markers_settings:
         if_key = markers_target == el["class_"]
         fig.add_trace(go.Scatter(
-            x=markers_target[if_key].index, 
-            y=y[if_key], 
-            mode='markers', 
-            marker=dict(size=10, color=el["color"]), 
+            x=markers_target[if_key].index,
+            y=y[if_key],
+            mode='markers',
+            marker=dict(size=10, color=el["color"]),
             name=el["name"]
         ))
 
@@ -26,4 +26,9 @@ def g_visualize(
         yaxis_title='Price',
         legend_title='Legend',
     )
-    fig.show()
+    fig.write_html("scratter_plot.html")
+
+    # linux
+    # import webbrowser
+    # webbrowser.open("scratter_plot.html")
+    # fig.show()
