@@ -107,7 +107,7 @@ def g_y_train(
     features_add={}
 ):
     feauture_main["name"] = "INDCS/ " + feauture_main["name"]
-    for key_, item_ in list(features_add.items()):
+    for key_, item_ in frozenset(features_add.items()):
         features_add["INDCS/ " + key_] = features_add.pop(key_)
     main_sell = data[feauture_main["name"]] > feauture_main["sell"]
     main_buy =  data[feauture_main["name"]] < feauture_main["buy"]
