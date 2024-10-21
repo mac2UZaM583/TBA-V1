@@ -16,7 +16,7 @@ def g_avg_module(
     sl=None,
 ):
     qty_new =(
-        ((price_open_avg / price_last - 1)
+        (abs(price_open_avg / price_last - 1)
         * settings_bt["leverage"])
         * qty
         * qty_power
@@ -28,7 +28,7 @@ def g_avg_module(
         qty_new,
 
         # price_open_avg
-        (((qty_new - qty) / qty) * price_last + price_open_avg) / 2
+        ((price_open_avg * qty) + (price_last * (qty_new - qty))) / qty_new
     )
 
 def g_df_test(dct):
@@ -64,9 +64,10 @@ def g_df_test(dct):
                 if (pnl_percent > 0 > side_pos) or (side_pos > 0 > pnl_percent):
                     in_position = 0
                     balance += qty * settings_bt["tp"] * settings_bt["leverage"]
+                    qty = 0
                     data.loc[i, "BT"] = in_position
                     data.loc[i, "BT/ balance"] = balance
-
+            # avg module
             if side_predict:
                 qty, price_open_avg = g_avg_module(
                     price_open_avg,
@@ -78,12 +79,26 @@ def g_df_test(dct):
                 )
                 data.loc[i, "BT"] = 2
 
-            if qty < 0:
+            # close module
+            if qty <= 0:
                 in_position = 0
                 balance += qty * settings_bt["tp"] * settings_bt["leverage"]
+                qty = 0
                 data.loc[i, "BT"] = in_position
                 data.loc[i, "BT/ balance"] = balance
 
+            # sl module
+            if (
+                qty >= (balance * settings_bt["sl"]) and
+                pnl_percent <= (-100) / settings_bt["leverage"]
+            ):
+                print("SL MODULE")
+                in_position = 0
+                balance -= qty
+                qty = 0
+                data.loc[i, "BT"] = in_position
+                data.loc[i, "BT/ balance"] = balance
+            print(i, qty, price_open_avg, price_last)
         elif side_predict and not np.isnan(side_predict):
             in_position = 1
             data.loc[i, "BT"] = in_position
