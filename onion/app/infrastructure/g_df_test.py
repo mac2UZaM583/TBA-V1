@@ -4,35 +4,6 @@ from onion.app.domain.g_df_pack import g_df_pack
 
 import numpy as np
 
-def g_avg_module(
-    price_open_avg,
-    price_last,
-    side_pos,
-    side_predict,
-    qty,
-    qty_power,
-    pnl_percent=None,
-    balance=None,
-    sl=None,
-):
-    qty_new =(
-        (abs(price_open_avg / price_last - 1)
-        * settings_bt["leverage"])
-        * qty
-        * qty_power
-    ) \
-        * side_pos * side_predict \
-        + qty
-    if qty_new == 0:
-        print(qty)
-    return (
-        # qty
-        qty_new,
-
-        # price_open_avg
-        ((price_open_avg * qty) + (price_last * (qty_new - qty))) / qty_new
-    )
-
 def g_df_test(dct):
     def g_zeroing_out(
         qty=4,
@@ -40,6 +11,91 @@ def g_df_test(dct):
         in_=0
     ):
         return (*np.full(qty, in_), *add)
+
+    def g_avg_module():
+        # the modular system allows me to
+        # use implicit modification of variable values
+        nonlocal\
+            price_open_avg,\
+            price_last,\
+            price_last,\
+            side_pos,\
+            side_predict,\
+            qty,\
+            data
+
+        qty_new =(
+            (abs(price_open_avg / price_last - 1)
+            * settings_bt["leverage"])
+            * qty
+            * settings_bt["avg_sttngs"]["power"]
+        ) \
+            * side_pos * side_predict \
+            + qty
+        price_open_avg = (
+            (price_open_avg * qty) +
+            (price_last * (qty_new - qty))
+        ) / qty_new
+        qty = qty_new
+        data.loc[i, "BT"] = 2
+
+    def g_sl_module():
+        nonlocal\
+            in_position,\
+            balance,\
+            qty,\
+            data\
+
+        balance -= qty
+        (
+            in_position,
+            qty,
+            data.loc[i, "BT"]
+        ) = g_zeroing_out(qty=3)
+
+    def g_tp_module():
+        nonlocal\
+            in_position,\
+            balance,\
+            qty,\
+            data\
+
+        balance += qty * settings_bt["tp"] * settings_bt["leverage"]
+        (
+            in_position,
+            qty,
+            data.loc[i, "BT"]
+        ) = g_zeroing_out(qty=3)
+
+    def g_close_module():
+        nonlocal\
+            in_position,\
+            balance,\
+            qty,\
+            data\
+
+        balance += qty * settings_bt["tp"] * settings_bt["leverage"]
+        (
+            in_position,
+            qty,
+            data.loc[i, "BT"]
+        ) = g_zeroing_out(qty=3)
+
+    def g_open_module():
+        nonlocal\
+            in_position,\
+            balance,\
+            qty,\
+            data,\
+            price_open_avg,\
+            side_pos
+
+        in_position = 1
+        data.loc[i, "BT"] = in_position
+        data.loc[i, "BT/ balance"] = balance
+        side_pos = side_predict
+        price_open_avg = price_last
+        qty = balance * settings_bt["balance_sttngs"]["used"]
 
     data = g_df_pack()
     data[["BT", "BT/ balance"]] = np.nan
@@ -62,60 +118,32 @@ def g_df_test(dct):
 
         if in_position:
             pnl_percent = price_open_avg / price_last - 1
+            {
+                # sl module
+                (
+                    qty >= (balance * settings_bt["sl"]) and
+                    pnl_percent <= (-100) / settings_bt["leverage"]
+                ): g_sl_module,
 
-            # sl module
-            if (
-                qty >= (balance * settings_bt["sl"]) and
-                pnl_percent <= (-100) / settings_bt["leverage"]
-            ):
-                print(i, "SL MODULE")
-                in_position = 0
-                balance -= qty
-                qty = 0
-                data.loc[i, "BT"] = in_position
-                data.loc[i, "BT/ balance"] = balance
-                continue
+                # tp module
+               all((abs(pnl_percent) >= settings_bt["tp"], (
+                   (pnl_percent > 0 > side_pos) or
+                   (side_pos > 0 > pnl_percent)
+               ))): g_tp_module,
 
-            # tp module
-            if abs(pnl_percent) >= settings_bt["tp"]:
-                if (pnl_percent > 0 > side_pos) or (side_pos > 0 > pnl_percent):
-                    in_position = 0
-                    balance += qty * settings_bt["tp"] * settings_bt["leverage"]
-                    qty = 0
-                    data.loc[i, "BT"] = in_position
-                    data.loc[i, "BT/ balance"] = balance
-                    continue
+               # avg module
+               side_predict != 0: g_avg_module,
 
-            # close module
-            if qty <= 0:
-                in_position = 0
-                balance += qty * settings_bt["tp"] * settings_bt["leverage"]
-                qty = 0
-                data.loc[i, "BT"] = in_position
-                data.loc[i, "BT/ balance"] = balance
-                continue
-
-            # avg module
-            if side_predict:
-                qty, price_open_avg = g_avg_module(
-                    price_open_avg,
-                    price_last,
-                    side_pos,
-                    side_predict,
-                    qty,
-                    settings_bt["avg_sttngs"]["power"],
-                )
-                data.loc[i, "BT"] = 2
-                continue
-
-            # print(i, qty, price_open_avg, price_last)
-        elif side_predict and not np.isnan(side_predict):
-            in_position = 1
-            data.loc[i, "BT"] = in_position
-            data.loc[i, "BT/ balance"] = balance
-            side_pos = side_predict
-            price_open_avg = price_last
-            qty = balance * settings_bt["balance_sttngs"]["used"]
+               # close module
+               qty <= 0: g_close_module,
+            }.get(True, lambda: 0)()
+        elif (
+            side_predict and
+            not np.isnan(side_predict)
+        ):
+            g_open_module()
 
         data.loc[i, "BT/ balance"] = balance
     return data
+
+# volatility index
