@@ -3,11 +3,19 @@ import plotly.graph_objects as go
 def g_visualize(
     x,
     y,
-    markers,
-    markers_settings,
+    markers=(),
+    markers_settings=(),
+    add={}
 ):
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=x, y=y, mode='lines', name='Close Price'))
+    for add_sett in add:
+        fig.add_trace(go.Scatter(
+            x=add_sett["x"],
+            y=add_sett["y"],
+            mode='lines',
+            name=add_sett["name"]
+        ))
 
     for mark, setting in zip(markers, markers_settings):
         for el in setting:
