@@ -9,8 +9,8 @@ async def cycle_tests(symbols):
     tasks = {
         symbol: g_df_test(symbol)
         for symbol in \
-        ["SUIUSDT", "ETHUSDT", "ATOMUSDT", "SAFEUSDT", "SANDUSDT", "UNIUSDT", "1INCHUSDT"]
-        # symbols
+        symbols[:15]
+        # ["SUIUSDT"]
     }
     return {
         symbol: result

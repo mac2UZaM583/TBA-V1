@@ -108,7 +108,7 @@ async def g_df_test(symbol):
     ) = g_zeroing_out(add=(settings_bt["balance_sttngs"]["balance"],))
 
     for i, el in (
-        lambda start_=int(settings_ml["klines_all"] * settings_ml["train_size"]): enumerate(
+        lambda start_=int(settings_ml["klines_all"] - settings_ml["klines_train_used"]): enumerate(
             data[["close", "predicted_label"]].iloc[start_:].values,
             start=start_
         )
@@ -141,16 +141,9 @@ async def g_df_test(symbol):
             # close module
             qty <= 0: g_close_module,
             }.get(True, lambda: 0)()
-
-            # if (
-            #     pnl_percent * settings_bt["leverage"] <= -0.2 and
-            #     qty >= balance * settings_bt["sl"] / 3
-            # ):
-            #     print(i, balance, qty, pnl_percent, price_open_avg, price_last)
         elif (
             side_predict and
             not np.isnan(side_predict)
         ):
             g_open_module()
-    print(symbol)
     return data

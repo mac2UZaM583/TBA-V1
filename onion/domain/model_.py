@@ -6,31 +6,19 @@ import numpy as np
 import pandas as pd
 
 def g_clean_x(x):
-    ddd = SimpleImputer(strategy="mean")\
-        .fit_transform(x.replace({-np.inf: np.nan, np.inf: np.nan}))
-
     return pd.DataFrame(
-        ddd,
+        SimpleImputer(strategy="mean")\
+            .fit_transform(x.replace({-np.inf: np.nan, np.inf: np.nan})),
         columns=x.columns
     )
-# меняем здесь а может даже не меняем хер знает
-def g_train_test_split(
-    x,
-    y,
-    test=True,
-    train_size=settings_ml["train_size"]
-):
+
+def g_train_test_split(x, y,):
     x = g_clean_x(x)
-    split_func = lambda v, len_: [
-        v[i][len_:] if i % 2 != 0 else v[i][:len_] for i in range(4)
-    ]
-
-    tple = (x, x, y, y)
-
-    if test:
-        return split_func(tple, int(len(x) * train_size))
-
-    return split_func(tple, -1)
+    return (lambda v, len_: [
+        v[i][len_:] if i % 2 != 0
+        else v[i][:len_]
+        for i in range(4)
+    ])((x, x, y, y), -1)
 
 def g_y_train(
     data,
@@ -45,16 +33,18 @@ def g_y_train(
 
     if features_add:
         invert_func = lambda v, bool_: np.invert(v) if bool_ else v
-        # fill_func =
         main_sell, main_buy = [
             np.logical_and(side, np.all(cond, axis=0))
             for side, cond in zip(
                 (main_sell, main_buy),
                 zip(*[[*cond] for cond in [
-                    invert_func((
-                        (data[feature] > thresholds[0]),
-                        ((data[feature] < thresholds[1]) if thresholds[1] != None else (data[feature] > thresholds[0]))
-                    ), thresholds[2])
+                    invert_func(
+                        (
+                            (data[feature] > thresholds[0]),
+                            ((data[feature] < thresholds[1]) if thresholds[1] != None else (data[feature] > thresholds[0]))
+                        ),
+                        thresholds[2]
+                    )
                     for feature, thresholds in features_add.items()
                 ]])
             )

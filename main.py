@@ -8,15 +8,13 @@ import numpy as np
 import asyncio
 
 async def main():
-    # from onion.app.domain.g_.global_ import g_symbols_f
-    # print(asyncio.run(g_symbols_f()))
 
     data_pack = await cycle_tests(await g_symbols_f())
     # g_report(
     #     arrs_balance=[el["BT/ balance"] for el in data_pack.values()],
     #     arr_symbols=[symbol for symbol in data_pack]
     # )
-    # data = data_pack["WAVESUSDT"]
+    #
     # g_visualize(
     #     x=data.index,
     #     y=data["close"],
@@ -60,6 +58,7 @@ async def main():
     #     #     ),
     #     # )
     # )
+
     from random import randint
     g_visualize(
         traces=tuple(
@@ -72,9 +71,6 @@ async def main():
             for symbol in data_pack
         )
     )
-    # print(data["BT/ balance"].iloc[-data["BT/ balance"].count():])
+
 if __name__ == "__main__":
     asyncio.run(main())
-
-# отображение изменение баланса по всем монетам из списка
-#

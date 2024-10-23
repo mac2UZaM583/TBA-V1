@@ -43,11 +43,16 @@ async def g_df_pack(symbol):
                 "TSI": (0.8, -0.8, False)
             }
         ),
-        test=True,
     )
-    return g_df_range_create(
-        data=data,
-        columns=["train_label", "predicted_label"],
-        range_=(x_train.index, x_test.index),
-        replace=(y_train, g_knn_predict(x_train, x_test, y_train,))
-    )
+    return data\
+        .rolling(window=settings_ml["klines_train_used"] + 1)\
+        .apply(lambda v: g_train_test_split(x=))
+    #  g_df_range_create(
+    #     data=data,
+    #     columns=["train_label", "predicted_label"],
+    #     range_=(, x_test.index),
+    #     replace=(y_train, [
+    #         g_knn_predict(x_train, x_test, y_train,)
+    #         for
+    #     ])
+    # )

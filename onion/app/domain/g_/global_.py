@@ -56,7 +56,7 @@ async def g_symbols_f(
             "USDC" not in el["symbol"]
         )
     ])
-    klines_week = int(settings_ml["klines_all"] / 60 / 24 / 7 * 2)
+    klines_week = int(settings_ml["klines_all"] / 60 / 24 / 7 * 1.3)
     klines_week = klines_week if klines_week > 1 else 2
     tasks = {
         symbol: aio_to_thread(lambda v=symbol: session_.get_kline(
@@ -67,8 +67,10 @@ async def g_symbols_f(
         )["result"]["list"])
         for symbol in symbols_non_time
     }
-    return np.array([
+    symbols_plu = np.array([
         symbol
         for symbol, v_ in zip(tasks.keys(), (await aio_gather(*tasks.values())))
-        if len(v_) >= klines_week
+        if len(v_) >= klines_week and not print(len(v_), klines_week)
     ])
+    # print(symbols_plu, klines_week)
+    return symbols_plu
