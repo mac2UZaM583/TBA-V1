@@ -6,59 +6,23 @@ from onion.app.domain.g_.global_ import g_symbols_f
 
 import numpy as np
 import asyncio
+import pickle
+import pandas as pd
+import os
 
 async def main():
 
-    data_pack = await cycle_tests(await g_symbols_f())
-    # g_report(
-    #     arrs_balance=[el["BT/ balance"] for el in data_pack.values()],
-    #     arr_symbols=[symbol for symbol in data_pack]
-    # )
-    #
-    # g_visualize(
-    #     x=data.index,
-    #     y=data["close"],
-    #     markers=(data["predicted_label"], data["BT"]),
-    #     markers_settings=[
-    #         (
-    #             dict(
-    #                 class_=-1,
-    #                 color="rgb(202,73,73)",
-    #                 name="Sell",
-    #             ),
-    #             dict(
-    #                 class_=1,
-    #                 color="rgb(74,138,139)",
-    #                 name="Buy",
-    #             )
-    #         ),
-    #         (
-    #             dict(
-    #                 class_=1,
-    #                 color="rgb(114,115,203)",
-    #                 name="in_position"
-    #             ),
-    #             dict(
-    #                 class_=0,
-    #                 color="rgb(180,88,58)",
-    #                 name="not_in_position"
-    #             ),
-    #             # dict(
-    #             #     class_=2,
-    #             #     color="yellow",
-    #             #     name="avg_order"
-    #             # )
-    #         ),
-    #     ],
-    #     # add=(
-    #     #     dict(
-    #     #         x=np.arange(data["BT/ balance"].count()),
-    #     #         y=data["BT/ balance"].iloc[-data["BT/ balance"].count():],
-    #     #         name="balance",
-    #     #     ),
-    #     # )
-    # )
-
+    await cycle_tests(["SUIUSDT", "ETHUSDT"])
+    
+    # func
+    data_pack = {}
+    dir = "data_pack"
+    for file in os.listdir(dir):
+        with open(f"{dir}/{file}", "rb") as f:
+            data_pack[file.rstrip(".pickle")] = pickle.load(f)
+            print(data_pack[file.rstrip(".pickle")].iloc[180_000:190_000]["BT/ balance"])
+    
+    # настроить получение данных отдельно из каждого файла и отображение на графике
     from random import randint
     g_visualize(
         traces=tuple(

@@ -3,6 +3,19 @@ from onion.domain.data_processing import g_df_range_create
 from onion.app.domain.g_df_pack import g_df_pack
 
 import numpy as np
+import pickle
+import os
+
+# onion.domain
+def g_df_save(
+    symbol, 
+    data, 
+    dir="data_pack",
+):
+    if not os.path.exists(dir):
+        os.mkdir(dir)
+    with open(f"{dir}/{symbol}_data.pickle", "wb") as f:
+        pickle.dump(data, f) 
 
 async def g_df_test(symbol):
     def g_zeroing_out(
@@ -96,7 +109,13 @@ async def g_df_test(symbol):
         price_open_avg = price_last
         qty = balance * settings_bt["balance_sttngs"]["used"]
 
-    data = await g_df_pack(symbol)
+    # data = await g_df_pack(symbol)
+    data_pack = {}
+    dir = "data_pack"
+    for file in os.listdir(dir):
+        with open(f"{dir}/{file}", "rb") as f:
+            data_pack[file.rstrip(".pickle")] = pickle.load(f)
+    data = data_pack[symbol + "_data"]
     data[["BT", "BT/ balance"]] = np.nan
 
     (
@@ -108,7 +127,7 @@ async def g_df_test(symbol):
     ) = g_zeroing_out(add=(settings_bt["balance_sttngs"]["balance"],))
 
     for i, el in (
-        lambda start_=int(settings_ml["klines_all"] - settings_ml["klines_train_used"]): enumerate(
+        lambda start_=settings_ml["klines_train_used"]: enumerate(
             data[["close", "predicted_label"]].iloc[start_:].values,
             start=start_
         )
@@ -146,4 +165,5 @@ async def g_df_test(symbol):
             not np.isnan(side_predict)
         ):
             g_open_module()
-    return data
+    
+    g_df_save(symbol, data)
